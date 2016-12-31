@@ -28,15 +28,20 @@ char *binaryFormula(char *g);
 int parse(char *g) which returns 1 if a proposition, 2 if neg, 3 if binary, ow 0 */
 
 int parse(char *g)
-/* returns 0 for non-formulas, 1 for atoms, 2 for negations and 3 for binary connective fmlas*/
 {
     int formulaType;
     switch(*g)
     {
-        case 'X': formulaType = 1; break;
         case '-': formulaType = 2; break;
         case '(': formulaType = 3; break;
-        default:  formulaType = 0; return 0;
+        default:  formulaType = 0; break;
+    }
+
+    if (formulaType = 0) {
+        if (*g > 96 && *g < 123) {
+	    return 1;
+	}
+	return 0;
     }
     g = formula(g);
     if (*g == 0)
@@ -47,10 +52,32 @@ int parse(char *g)
 
 /* 2.
 void complete(struct tableau *t)
-which expands the root of the tableau and recursively completes any child tableaus.
-3. 
-int closed(struct tableau *t)
-which checks if the whole tableau is closed.
+which expands the root of the tableau and recursively completes any child tableaus. */
+
+void complete(struct tableau *t) {
+    int formulaType = parse(t->root);
+    if (formulaType = 1) {// proposition
+        return;
+    }
+    else if (formulaType = 2) {
+        completeNegation(t);
+    }
+    else if (formulaType = 3) {
+        completeBinary(t);
+    }
+    
+    if (t->left)
+        complete(t->left);
+    if (t->right)
+        complete(t->right);
+}
+
+/* 3.
+int closed(struct tableau *t) */
+
+
+
+/* which checks if the whole tableau is closed.
 Of course you will almost certainly need many other functions.
 
 You may vary this program provided it reads 10 formulas in a file called "input.txt" and outputs in the way indicated below to a file called "output.txt".
@@ -120,11 +147,28 @@ char *formula(char *g) /* Check validity of formula */
 {
     switch(*g)
     {
-        case 'X': g = atomicFormula(g); break;
         case '-': g = negatedFormula(g); break;
         case '(': g = binaryFormula(g); break;
-        default:  *g == '0'; break;
+        default:  {
+            if (*g > 96 && *g < 123) {
+	        g++;
+	        break;
+	    }
+	    else {
+	        *g = '0';
+	        break;
+	    }
+	}
     }
+    return g;
+}
+
+char *proposition(char *g) {
+    if (*g > 96 && *g < 123) {
+        g++;
+        return g;
+    }
+    *g = '0';
     return g;
 }
 
@@ -132,36 +176,6 @@ char *negatedFormula(char *g)
 {
     g++;
     return formula(g);
-}
-
-char *atomicFormula(char *g)
-{
-    g++;
-    if (*g != '[')
-    {
-        *g = '0';
-        return g;
-    }
-    g++;
-    if (*g != 'x' && *g != 'y' && *g != 'z')
-    {
-        *g = '0';
-        return g;
-    }
-    g++;
-    if (*g != 'x' && *g != 'y' && *g != 'z')
-    {
-        *g = '0';
-        return g;
-    }
-    g++;
-    if (*g != ']')
-    {
-        *g = '0';
-        return g;
-    }
-    g++;
-    return g;
 }
 
 char *binaryFormula(char *g)
@@ -187,7 +201,169 @@ char *binaryFormula(char *g)
     }
 }
 
+char *partone(char *g)
+/*
+Given a formula (A*B) this should return A
+ */
+{
+    g++;
+    char *left = malloc(Fsize);
+    char *first = left;
+    int brackets = 0;
+    while (brackets != 0 || (*g != 'v' && *g != '^' && *g != '>'))
+    {
+        if (*g == '(')
+            brackets++;
+        if (*g == ')')
+            brackets--;
+        *left = *g;
+        left++;
+        g++;
+    }
+    *left = 0;
+    return first;
+}
+
+char *parttwo(char *g)
+/*
+Given a formula (A*B) this should return B
+ */
+{
+    g++;
+    char *right = malloc(Fsize);
+    char *first = right;
+    int brackets = 0;
+    while (brackets != 0 || (*g != 'v' && *g != '^' && *g != '>'))
+    {
+        if (*g == '(')
+            brackets++;
+        if (*g == ')')
+            brackets--;
+        g++;
+    }
+    g++;
+    while (brackets != 0 || *g != ')')
+    {
+        if (*g == '(')
+            brackets++;
+        if (*g == ')')
+            brackets--;
+        *right = *g;
+        right++;
+        g++;
+    }
+    return first;
+}
+
+char bin(char *g)
+/*
+Given a formula (A*B) this should return the character *
+ */
+{
+    g++;
+    int brackets = 0;
+    while (brackets != 0 || (*g != 'v' && *g != '^' && *g != '>'))
+    {
+        if (*g == '(')
+            brackets++;
+        if (*g == ')')
+            brackets--;
+        g++;
+    }
+    return *g;
+}
+
+void appendAll(struct tableau *root,
+	           char           *fmla) {
+    if (!root->left) {
+        appendLeft(root, fmla);
+    }
+    else {
+        appendAll(root->left, fmla);
+    }
+
+    if (!root->right) {
+        appendRight(root, fmla);
+    }
+    else {
+        appendAll(root->right, fmla);
+    }
+
+}
+
+void appendLeft(struct tableau *root,
+                char           *fmla) {
+    if (root->left) {
+        appendAll(root->left, fmla);
+    }
+    else {
+        struct tableau t = {fmla, NULL, NULL, root};
+        root->left = &t;
+    }
+}
 
 
+void appendRight(struct tableau *root,
+                 char            *fmla) {
+    if (root->right) {
+        appendAll(root->right, fmla);
+    }
+    else {
+        struct tableau t = {fmla, NULL, NULL, root};
+        root->left = &t;
+    }
+}
 
+char* negate(char* fmla) {
+    char *negate = malloc(Fsize);
+    char *first = negate;
+    int brackets = 0;
+    while (brackets != 0 || *fmla != 0)
+    {
+        if (*fmla == '(')
+            brackets++;
+        if (*fmla == ')')
+            brackets--;
+        *negate = *fmla;
+        neagte++;
+        fmla++;
+    }
+    *negate = 0;
+    return first;
+}
 
+void completeNegation(struct tableau *root) {
+    char* fmla = root->root
+    fmla++;
+    int formulaType = parse(fmla)
+    if (formulaType == 1) {
+        return;
+    }
+    else if (formulaType == 2) {
+        fmla++;
+        appendAll(root, fmla);
+        return;
+    }
+    else if (formulaType == 3) {
+        char binType = bin(fmla);
+        char* a = partOne(fmla);
+        char* b = partTwo(fmla);
+        switch (binType) {
+            case 'v': appendAll(root, negate(a)); appendAll(root, negate(b)); free(a); free(b); break;
+            case '^': appendLeft(root, negate(a)); appendRight(root, negate(b)); free(a); free(b); break;
+            case '>': appendAll(root, a); appendAll(root, negate(b)); free(b); break;
+        }
+    }
+}
+
+void completeBinary(struct tableau *root) {
+    char* fmla = root->root
+    char binType = bin(fmla);
+    char* a = partOne(fmla);
+    char* b = partTwo(fmla);
+    switch (binType) {
+        case 'v': appendLeft(root, a); appendRight(root, b); break;
+        case '^': appendAll(root, a); appendAll(root, b); break;
+        case '>': appendLeft(root, b); appendRight(root, negate(a)); appendRight(root, negate(b)); free(a); break;
+    }
+}

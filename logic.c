@@ -18,12 +18,34 @@ struct tableau {
   struct tableau *parent;
 }*tab, *node, *node1, *kid, *pa;
 
-
+char *formula(char *g);
+char *negatedFormula(char *g);
+char *atomicFormula(char *g);
+char *binaryFormula(char *g);
 
 /*put all your functions here.  You will need
 1.
-int parse(char *g) which returns 1 if a proposition, 2 if neg, 3 if binary, ow 0
-2. 
+int parse(char *g) which returns 1 if a proposition, 2 if neg, 3 if binary, ow 0 */
+
+int parse(char *g)
+/* returns 0 for non-formulas, 1 for atoms, 2 for negations and 3 for binary connective fmlas*/
+{
+    int formulaType;
+    switch(*g)
+    {
+        case 'X': formulaType = 1; break;
+        case '-': formulaType = 2; break;
+        case '(': formulaType = 3; break;
+        default:  formulaType = 0; return 0;
+    }
+    g = formula(g);
+    if (*g == 0)
+        return formulaType;
+    else
+        return 0;
+}
+
+/* 2.
 void complete(struct tableau *t)
 which expands the root of the tableau and recursively completes any child tableaus.
 3. 
@@ -94,9 +116,76 @@ int main()
   return(0);
 }
 
+char *formula(char *g) /* Check validity of formula */
+{
+    switch(*g)
+    {
+        case 'X': g = atomicFormula(g); break;
+        case '-': g = negatedFormula(g); break;
+        case '(': g = binaryFormula(g); break;
+        default:  *g == '0'; break;
+    }
+    return g;
+}
 
+char *negatedFormula(char *g)
+{
+    g++;
+    return formula(g);
+}
 
+char *atomicFormula(char *g)
+{
+    g++;
+    if (*g != '[')
+    {
+        *g = '0';
+        return g;
+    }
+    g++;
+    if (*g != 'x' && *g != 'y' && *g != 'z')
+    {
+        *g = '0';
+        return g;
+    }
+    g++;
+    if (*g != 'x' && *g != 'y' && *g != 'z')
+    {
+        *g = '0';
+        return g;
+    }
+    g++;
+    if (*g != ']')
+    {
+        *g = '0';
+        return g;
+    }
+    g++;
+    return g;
+}
 
+char *binaryFormula(char *g)
+{
+    g++;
+    g = formula(g);
+    if (*g != 'v' && *g != '^' && *g != '>')
+    {
+        *g = '0';
+        return g;
+    }
+    g++;
+    g = formula(g);
+    if (*g == ')')
+    {
+        g++;
+        return g;
+    }
+    else
+    {
+        *g = '0';
+        return g;
+    }
+}
 
 
 

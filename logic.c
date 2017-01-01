@@ -18,11 +18,19 @@ struct tableau {
   struct tableau *parent;
 }*tab, *node, *node1, *kid, *pa;
 
+struct tableau *leaves[50];
+int noLeaves = 0;
+ 
 char *formula(char *g);
 char *negatedFormula(char *g);
 char *atomicFormula(char *g);
 char *binaryFormula(char *g);
 
+void completeNegation(struct tableau *root);
+void completeBinary(struct tableau *root);
+
+void findLeaves(struct tableau *t);
+int open(struct tableau *t);
 /*put all your functions here.  You will need
 1.
 int parse(char *g) which returns 1 if a proposition, 2 if neg, 3 if binary, ow 0 */
@@ -75,7 +83,16 @@ void complete(struct tableau *t) {
 /* 3.
 int closed(struct tableau *t) */
 
-
+int closed(struct tableau *t) {
+    findLeaves(t);
+    int i = 0;
+    for (i; i < noLeaves; i++) {
+        if (open(leaves[i])) {
+            return 0;
+        }
+    }
+    return 1;
+}
 
 /* which checks if the whole tableau is closed.
 Of course you will almost certainly need many other functions.
@@ -365,5 +382,60 @@ void completeBinary(struct tableau *root) {
         case 'v': appendLeft(root, a); appendRight(root, b); break;
         case '^': appendAll(root, a); appendAll(root, b); break;
         case '>': appendLeft(root, b); appendRight(root, negate(a)); appendRight(root, negate(b)); free(a); break;
+    }
+}
+
+void findLeaves(struct tableau *t) {
+    if (t->left) {
+        findLeaves(t->left);
+        findLeaves(t->right);
+    }
+    else {
+        leaves[noLeaves] = t
+        noLeaves++;
+    }
+}
+
+int checkAbove(struct tableau *t, char *prop) {
+    if (*prop == '-' && *(t->root) == '-' && *((t->root)+1) == *(prop + 1)) {
+        return 1;
+    }
+    else if (*(t->root) == *prop) {
+        return 1;
+    }
+    else {
+        if (t->parent) {
+            return checkAbove(t->parent, prop);
+        }
+        else {
+            return 0;
+        }
+    }
+}
+
+int open(struct tableau *t) {
+    int nodeType = parse(t->root);
+    if (nodeType == 1) {
+       int exists = checkAbove(t->parent, negate(t->root));
+       if (exists) {
+           return 0;
+       }
+    }
+    else if (nodeType == 2) {
+        char* negated = t->root;
+        negated++;
+        if (parse(negated) == 1) {
+            int exists = checkAbove(t->parent, negated);
+            if (exists) {
+                return 0;
+            }
+        }
+    }
+    
+    if (tableau->parent) {
+        return open(t->parent);
+    }
+    else {
+        return 1;
     }
 }

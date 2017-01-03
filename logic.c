@@ -64,7 +64,6 @@ which expands the root of the tableau and recursively completes any child tablea
 
 void complete(struct tableau *t) {
     int formulaType = parse(t->root);
-    printf("Complete %s\n", t->root);
     if (formulaType == 2) {
         completeNegation(t);
     }
@@ -85,15 +84,12 @@ int closed(struct tableau *t) {
     clearLeaves();
     noLeaves = 0;
     findLeaves(t);
-    printf("Leaves: %d\n", noLeaves);
     int i = 0;
     for (i; i < noLeaves; i++) {
         if (open(leaves[i])) {
-            printf("Open\n");
             return 0;
         }
     } 
-    printf("Closed\n");
     return 1;
 }
 
@@ -103,41 +99,9 @@ Of course you will almost certainly need many other functions.
 You may vary this program provided it reads 10 formulas in a file called "input.txt" and outputs in the way indicated below to a file called "output.txt".
 */
 
-
-
-
-
-
-
-
-
-int checkAbove(struct tableau *t, char *prop);
-char* negate(char* fmla);
-
-
-
-
-
 int main()
 
 { 
-/*   char* input = "-((p>(qvr))>((p>q)v(p>r)))";
-   printf("%d\n", parse(input));
-   struct tableau t ={input, NULL, NULL, NULL};
-   complete(&t);
-   printf("completed");
-   printf("completed");
-   printf("completed");
-   printf("completed");
-   printf("completed");
-   char* negated = negate(t.root);
-   closed(&t);
-   printf("%d\n", noLeaves); 
-   int i;
-   for (i = 0; i < noLeaves; i++) {
-       printf("%s\n", leaves[i]->root);
-   }
-   closed(&t); */
 /*input a string and check if its a propositional formula */
   char *name = malloc(Fsize);
   FILE *fp, *fpout; 
@@ -402,7 +366,6 @@ char* conjunction(char *a, char *b) {
 
 void completeNegation(struct tableau *root) {
     char* fmla = root->root;
-    printf("Complete negation %s", fmla);
     fmla++;
     int formulaType = parse(fmla);
     if (formulaType == 1) {
@@ -481,7 +444,6 @@ int checkAbove(struct tableau *t, char *prop) {
 }
 
 int open(struct tableau *t) {
-    printf("Check open of %s\n", t->root);
     if (t->parent) {
         int nodeType = parse(t->root); 
         if (nodeType == 1) {

@@ -307,29 +307,6 @@ Given a formula (A*B) this should return the character *
     return *g;
 }
 
-void appendLeft(struct tableau *root, char *fmla);
-void appendRight(struct tableau *root, char *fmla);
-
-void appendAll(struct tableau *root,
-	           char           *fmla) {
-    if (root->left) {
-        printf("Append All %s\n", fmla);
-        appendAll(root->left, fmla);
-    }
-    else {
-        appendLeft(root, fmla);
-    }
-
-    if (root->right) {
-        printf("Append All %s\n", fmla);
-        appendAll(root->right, fmla);
-    }
-    else {
-        appendRight(root, fmla);
-    }
-
-}
-
 void append(struct tableau *root, char *fmla) {
     if (root->left) {
         if (root->right) {
@@ -368,35 +345,6 @@ void appendAlternate(struct tableau *root, char *a, char *b) {
         right->parent = root;
         root->right = right;
     }
-}
-
-void appendLeft(struct tableau *root,
-                char           *fmla) {
-    if (root->left) {
-        appendAll(root->left, fmla);
-    }
-    else {
-        struct tableau *t = malloc(sizeof(struct tableau));
-        t->root = fmla;
-        t->parent = root;
-        root->left = t;
-        printf("Append Left %s\n", t->root);
-    }
-}
-
-
-void appendRight(struct tableau *root,
-                 char            *fmla) {
-    if (root->right) {
-        appendAll(root->right, fmla);
-    }
-    else {
-        struct tableau *t = malloc(sizeof(struct tableau));
-        t->root = fmla;
-        t->parent = root;
-        root->right = t;
-        printf("Append Right %s\n", t->root);
-    } 
 }
 
 char* negate(char* fmla) {

@@ -18,7 +18,7 @@ struct tableau {
   struct tableau *parent;
 }*tab, *node, *node1, *kid, *pa;
 
-struct tableau *leaves[50];
+struct tableau* leaves[250];
 int noLeaves = 0;
  
 char *formula(char *g);
@@ -30,6 +30,7 @@ void completeNegation(struct tableau *root);
 void completeBinary(struct tableau *root);
 
 void findLeaves(struct tableau *t);
+void clearLeaves();
 int open(struct tableau *t);
 /*put all your functions here.  You will need
 1.
@@ -45,11 +46,10 @@ int parse(char *g)
         default:  formulaType = 0; break;
     }
 
-    if (formulaType = 0) {
+    if (formulaType == 0) {
         if (*g > 96 && *g < 123) {
-	    return 1;
-	}
-	return 0;
+	        formulaType = 1;
+	    }
     }
     g = formula(g);
     if (*g == 0)
@@ -64,13 +64,11 @@ which expands the root of the tableau and recursively completes any child tablea
 
 void complete(struct tableau *t) {
     int formulaType = parse(t->root);
-    if (formulaType = 1) {// proposition
-        return;
-    }
-    else if (formulaType = 2) {
+    printf("Complete %s\n", t->root);
+    if (formulaType == 2) {
         completeNegation(t);
     }
-    else if (formulaType = 3) {
+    else if (formulaType == 3) {
         completeBinary(t);
     }
     
@@ -84,13 +82,18 @@ void complete(struct tableau *t) {
 int closed(struct tableau *t) */
 
 int closed(struct tableau *t) {
+    clearLeaves();
+    noLeaves = 0;
     findLeaves(t);
+    printf("Leaves: %d\n", noLeaves);
     int i = 0;
     for (i; i < noLeaves; i++) {
         if (open(leaves[i])) {
+            printf("Open\n");
             return 0;
         }
-    }
+    } 
+    printf("Closed\n");
     return 1;
 }
 
@@ -108,9 +111,8 @@ You may vary this program provided it reads 10 formulas in a file called "input.
 
 
 
-
-
-
+int checkAbove(struct tableau *t, char *prop);
+char* negate(char* fmla);
 
 
 
@@ -118,11 +120,27 @@ You may vary this program provided it reads 10 formulas in a file called "input.
 
 int main()
 
-{ /*input a string and check if its a propositional formula */
-
-
+{ 
+/*   char* input = "-((p>(qvr))>((p>q)v(p>r)))";
+   printf("%d\n", parse(input));
+   struct tableau t ={input, NULL, NULL, NULL};
+   complete(&t);
+   printf("completed");
+   printf("completed");
+   printf("completed");
+   printf("completed");
+   printf("completed");
+   char* negated = negate(t.root);
+   closed(&t);
+   printf("%d\n", noLeaves); 
+   int i;
+   for (i = 0; i < noLeaves; i++) {
+       printf("%s\n", leaves[i]->root);
+   }
+   closed(&t); */
+/*input a string and check if its a propositional formula */
   char *name = malloc(Fsize);
-  FILE *fp, *fpout;
+  FILE *fp, *fpout; 
  
   /* reads from input.txt, writes to output.txt*/
   if ((  fp=fopen("input.txt","r"))==NULL){printf("Error opening file");exit(1);}
@@ -139,19 +157,18 @@ int main()
 	case(3):fprintf(fpout, "%s is a binary.  ", name);break;
 	default:fprintf(fpout, "What the f***!  ");
 	}
-
       /*make new tableau with name at root, no children, no parent*/
   
       struct tableau t={name, NULL, NULL, NULL};
 
       /*expand the root, recursively complete the children*/
       if (parse(name)!=0)
-	{ complete(&t);
+	{ complete(&t); 
 	  if (closed(&t)) fprintf(fpout, "%s is not satisfiable.\n", name);
 	  else fprintf(fpout, "%s is satisfiable.\n", name);
 	}
       else fprintf(fpout, "I told you, %s is not a formula.\n", name);
-    }
+    } 
  
   fclose(fp);
   fclose(fpout);
@@ -168,14 +185,14 @@ char *formula(char *g) /* Check validity of formula */
         case '(': g = binaryFormula(g); break;
         default:  {
             if (*g > 96 && *g < 123) {
-	        g++;
-	        break;
+	            g++;
+	            break;
+	        }
+	        else {
+	            *g = '0';
+	            break;
+	        }
 	    }
-	    else {
-	        *g = '0';
-	        break;
-	    }
-	}
     }
     return g;
 }
@@ -218,7 +235,7 @@ char *binaryFormula(char *g)
     }
 }
 
-char *partone(char *g)
+char *partOne(char *g)
 /*
 Given a formula (A*B) this should return A
  */
@@ -241,7 +258,7 @@ Given a formula (A*B) this should return A
     return first;
 }
 
-char *parttwo(char *g)
+char *partTwo(char *g)
 /*
 Given a formula (A*B) this should return B
  */
@@ -290,22 +307,67 @@ Given a formula (A*B) this should return the character *
     return *g;
 }
 
+void appendLeft(struct tableau *root, char *fmla);
+void appendRight(struct tableau *root, char *fmla);
+
 void appendAll(struct tableau *root,
 	           char           *fmla) {
-    if (!root->left) {
-        appendLeft(root, fmla);
-    }
-    else {
+    if (root->left) {
+        printf("Append All %s\n", fmla);
         appendAll(root->left, fmla);
     }
-
-    if (!root->right) {
-        appendRight(root, fmla);
-    }
     else {
+        appendLeft(root, fmla);
+    }
+
+    if (root->right) {
+        printf("Append All %s\n", fmla);
         appendAll(root->right, fmla);
     }
+    else {
+        appendRight(root, fmla);
+    }
 
+}
+
+void append(struct tableau *root, char *fmla) {
+    if (root->left) {
+        if (root->right) {
+            append(root->left, fmla);
+            append(root->right, fmla);
+        }
+        else {
+            append(root->left, fmla);
+        }
+    }
+    else {
+        struct tableau *t = malloc(sizeof(struct tableau));
+        t->root = fmla;
+        t->parent = root;
+        root->left = t;
+    }
+}
+
+void appendAlternate(struct tableau *root, char *a, char *b) {
+    if (root->left) {
+        if (root->right) {
+            appendAlternate(root->left, a, b);
+            appendAlternate(root->right, a, b);
+        }
+        else {
+            appendAlternate(root->left, a, b);
+        }
+    }
+    else {
+        struct tableau *left = malloc(sizeof(struct tableau));
+        left->root = a;
+        left->parent = root;
+        root->left = left;
+        struct tableau *right = malloc(sizeof(struct tableau));
+        right->root = b;
+        right->parent = root;
+        root->right = right;
+    }
 }
 
 void appendLeft(struct tableau *root,
@@ -314,8 +376,11 @@ void appendLeft(struct tableau *root,
         appendAll(root->left, fmla);
     }
     else {
-        struct tableau t = {fmla, NULL, NULL, root};
-        root->left = &t;
+        struct tableau *t = malloc(sizeof(struct tableau));
+        t->root = fmla;
+        t->parent = root;
+        root->left = t;
+        printf("Append Left %s\n", t->root);
     }
 }
 
@@ -326,14 +391,19 @@ void appendRight(struct tableau *root,
         appendAll(root->right, fmla);
     }
     else {
-        struct tableau t = {fmla, NULL, NULL, root};
-        root->left = &t;
-    }
+        struct tableau *t = malloc(sizeof(struct tableau));
+        t->root = fmla;
+        t->parent = root;
+        root->right = t;
+        printf("Append Right %s\n", t->root);
+    } 
 }
 
 char* negate(char* fmla) {
     char *negate = malloc(Fsize);
     char *first = negate;
+    *negate = '-';
+    negate++;
     int brackets = 0;
     while (brackets != 0 || *fmla != 0)
     {
@@ -342,23 +412,57 @@ char* negate(char* fmla) {
         if (*fmla == ')')
             brackets--;
         *negate = *fmla;
-        neagte++;
+        negate++;
         fmla++;
     }
     *negate = 0;
     return first;
 }
 
+char* conjunction(char *a, char *b) {
+    char *con = malloc(Fsize);
+    char *first = con;
+    *con = '(';
+    con++;
+    int brackets = 0;
+    while (brackets != 0 || *a != 0)
+    {
+        if (*a == '(')
+            brackets++;
+        if (*a == ')')
+            brackets--;
+        *con = *a;
+        con++;
+        a++;
+    }
+    *con = '^';
+    con++;
+    brackets = 0;
+    while (brackets != 0 || *b != 0)
+    {
+        if (*b == '(')
+            brackets++;
+        if (*b == ')')
+            brackets--;
+        *con = *b;
+        con++;
+        b++;
+    }
+    *con = 0;
+    return first;
+}
+
 void completeNegation(struct tableau *root) {
-    char* fmla = root->root
+    char* fmla = root->root;
+    printf("Complete negation %s", fmla);
     fmla++;
-    int formulaType = parse(fmla)
+    int formulaType = parse(fmla);
     if (formulaType == 1) {
         return;
     }
     else if (formulaType == 2) {
         fmla++;
-        appendAll(root, fmla);
+        append(root, fmla);
         return;
     }
     else if (formulaType == 3) {
@@ -366,43 +470,57 @@ void completeNegation(struct tableau *root) {
         char* a = partOne(fmla);
         char* b = partTwo(fmla);
         switch (binType) {
-            case 'v': appendAll(root, negate(a)); appendAll(root, negate(b)); free(a); free(b); break;
-            case '^': appendLeft(root, negate(a)); appendRight(root, negate(b)); free(a); free(b); break;
-            case '>': appendAll(root, a); appendAll(root, negate(b)); free(b); break;
+            case 'v': append(root, negate(a)); append(root, negate(b)); break;
+            case '^': appendAlternate(root, negate(a), negate(b)); break;
+            case '>': append(root, a); append(root, negate(b)); break;
         }
     }
 }
 
 void completeBinary(struct tableau *root) {
-    char* fmla = root->root
+    char* fmla = root->root;
     char binType = bin(fmla);
     char* a = partOne(fmla);
     char* b = partTwo(fmla);
     switch (binType) {
-        case 'v': appendLeft(root, a); appendRight(root, b); break;
-        case '^': appendAll(root, a); appendAll(root, b); break;
-        case '>': appendLeft(root, b); appendRight(root, negate(a)); appendRight(root, negate(b)); free(a); break;
+        case 'v': appendAlternate(root, a, b); break;
+        case '^': append(root, a); append(root, b); break;
+        case '>': appendAlternate(root, negate(a), conjunction(a, b)); break;
     }
 }
 
 void findLeaves(struct tableau *t) {
     if (t->left) {
         findLeaves(t->left);
-        findLeaves(t->right);
+        if (t->right) {
+            findLeaves(t->right);
+        }
     }
     else {
-        leaves[noLeaves] = t
+        leaves[noLeaves] = t;
         noLeaves++;
     }
 }
 
+void clearLeaves() {
+    int i;
+    for (i = 0; i < 250; i++) {
+        leaves[i]=NULL;
+    }
+}
+
 int checkAbove(struct tableau *t, char *prop) {
-    if (*prop == '-' && *(t->root) == '-' && *((t->root)+1) == *(prop + 1)) {
+    char *a = t->root;
+    if (*prop == '-' && *a == '-') {
+        a++;
+        prop++;
+        if (*a == *prop) {
+            return 1;
+        }
+    } 
+    if (*a != '-' && *a == *prop) {
         return 1;
-    }
-    else if (*(t->root) == *prop) {
-        return 1;
-    }
+    } 
     else {
         if (t->parent) {
             return checkAbove(t->parent, prop);
@@ -410,29 +528,33 @@ int checkAbove(struct tableau *t, char *prop) {
         else {
             return 0;
         }
-    }
+    } 
+    return 1;
 }
 
 int open(struct tableau *t) {
-    int nodeType = parse(t->root);
-    if (nodeType == 1) {
-       int exists = checkAbove(t->parent, negate(t->root));
-       if (exists) {
-           return 0;
-       }
-    }
-    else if (nodeType == 2) {
-        char* negated = t->root;
-        negated++;
-        if (parse(negated) == 1) {
-            int exists = checkAbove(t->parent, negated);
+    printf("Check open of %s\n", t->root);
+    if (t->parent) {
+        int nodeType = parse(t->root); 
+        if (nodeType == 1) {
+            char *negated = negate(t->root);
+            int exists = checkAbove(t->parent, negated); 
+            free(negated);
             if (exists) {
                 return 0;
+            } 
+        }
+        else if (nodeType == 2) {
+            char* negated = t->root;
+            negated++;
+            if (parse(negated) == 1) {
+                int exists = checkAbove(t->parent, negated);
+                if (exists) {
+                    return 0;
+                } 
             }
         }
-    }
-    
-    if (tableau->parent) {
+        
         return open(t->parent);
     }
     else {
